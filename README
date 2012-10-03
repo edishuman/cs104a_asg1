@@ -1,17 +1,2 @@
 Name: Edward Kuang
 Username: ekuang1
-
-
-The main program will call a test harness for the string table ADT. The test harness will work as
-follows : after filtering the input through the C preprocessor, read a line using fgets(3), and tokenize
-it using strtok_r(3), with the string "\ \t\n", i.e., spaces, tabls, and newline characters, and insert it
-into the string table. After that, the main program will call the string table ADT opration to dump
-the string table into its trace file. See the example in the subdirectory cppstrtok for an illustration of
-how to call the C preprocessor. Your program will not read the raw file, only the output of cpp.
-Do not confuse the program cpp, which is the C preprocessor with the suffix .cpp, commonly used to
-indicate a C++ program, compiled via the g++ compiler.
-The purpose of the string table is to keep tracks of strings in a unique manner. For example, if the
-string "abc" is entered multiple times, it appears only once in the table. This means that instead of
-using strcmp(3) to determine if two entries in the hash table are the same, one can simply compare
-the pointers.
-
