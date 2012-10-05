@@ -23,7 +23,6 @@
 #define __STRHASH_H__
 
 #include <inttypes.h>
-
 #include "auxlib.h"
 
 typedef uint32_t hashcode_t;

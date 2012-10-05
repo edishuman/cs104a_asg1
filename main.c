@@ -1,96 +1,94 @@
+// $Id: cppstrtok.c,v 1.14 2011-10-03 20:20:08-07 - - $
 
-#include <assert.h>
+// Use cpp to scan a file and print line numbers.
+// Print out each input line read in, then strtok it for
+// tokens.
+
+#define _GNU_SOURCE
+#define CPP "/usr/bin/cpp"
+#define LINESIZE 1024
+
 #include <errno.h>
+#include <libgen.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
+#include <wait.h>
 
-#include "astree.h"
-#include "emit.h"
-#include "lyutils.h"
-#include "auxlib.h"
+#include "stringtable.h"
 
-#define CPP "/usr/bin/cpp"
 
-struct options{
-   bool dumptree;
-   bool echoinput;
-};
+int exit_status = EXIT_SUCCESS;
+char *progname;
 
-// Open a pipe from the C preprocessor.
-// Exit failure if can't.
-// Assignes opened pipe to FILE *yyin.
-char *yyin_cpp_command = NULL;
-void yyin_cpp_popen (char *filename) {
-   yyin_cpp_command = malloc (strlen (CPP) + strlen (filename) + 2);
-   assert (yyin_cpp_command != NULL);
-   strcpy (yyin_cpp_command, CPP);
-   strcat (yyin_cpp_command, " ");
-   strcat (yyin_cpp_command, filename);
-   yyin = popen (yyin_cpp_command, "r");
-   if (yyin == NULL) {
-      syserrprintf (yyin_cpp_command);
-      exit (get_exitstatus());
-   }
+// Print a warning after a failed system call.
+void syswarn (char *problem) {
+    fflush (NULL);
+    fprintf (stderr, "%s: %s: %s\n",
+             progname, problem, strerror (errno));
+    fflush (NULL);
+    exit_status = EXIT_FAILURE;
 }
 
-void yyin_cpp_pclose (void) {
-   int pclose_rc = pclose (yyin);
-   eprint_status (yyin_cpp_command, pclose_rc);
+// Chomp the last character from a buffer if it is delim.
+void chomp (char *string, char delim) {
+    size_t len = strlen (string);
+    if (len == 0) return;
+    char *nlpos = string + len - 1;
+    if (*nlpos == delim) *nlpos = '\0';
 }
 
-void scan_opts (int argc, char **argv, struct options *options) {
-   int option;
-   opterr = 0;
-   yy_flex_debug = 0;
-   yydebug = 0;
-   for(;;) {
-      option = getopt (argc, argv, "@:ely");
-      if (option == EOF) break;
-      switch (option) {
-         case '@': set_debugflags (optarg);   break;
-         case 'e': options->echoinput = TRUE; break;
-         case 'l': yy_flex_debug = 1;         break;
-         case 'y': yydebug = 1;               break;
-         default:  errprintf ("%:bad option (%c)\n", optopt); break;
-      }
-   }
-   if (optind > argc) {
-      errprintf ("Usage: %s [-ly] [filename]\n", get_execname());
-      exit (get_exitstatus());
-   }
-   char *filename = optind == argc ? "-" : argv[optind];
-   yyin_cpp_popen (filename);
-   DEBUGF ('m', "filename = %s, yyin = %p, fileno (yyin) = %d\n",
-           filename, yyin, fileno (yyin));
-   scanner_newfilename (filename);
+// Run cpp against the lines of the file.
+void cpplines (FILE *pipe, char *filename) {
+    int linenr = 1;
+    char inputname[LINESIZE];
+    strcpy (inputname, filename);
+    for (;;) {
+       char buffer[LINESIZE];
+       char *fgets_rc = fgets (buffer, LINESIZE, pipe);
+       if (fgets_rc == NULL) break;
+       chomp (buffer, '\n');
+       //printf ("%s:line %d: [%s]\n", filename, linenr, buffer);
+       // http://gcc.gnu.org/onlinedocs/cpp/Preprocessor-Output.html
+       int sscanf_rc = sscanf (buffer, "# %d \"%[^\"]\"",
+                               &linenr, filename);
+       if (sscanf_rc == 2) {
+          //printf ("DIRECTIVE: line %d file \"%s\"\n", linenr, filename);
+          continue;
+       }
+       char *savepos = NULL;
+       char *bufptr = buffer;
+       for (int tokenct = 1;; ++tokenct) {
+          char *token = strtok_r (bufptr, " \t\n", &savepos);
+          bufptr = NULL;
+          if (token == NULL) break;
+          //printf ("token %d.%d: [%s]\n", linenr, tokenct, token);
+       }
+       ++linenr;
+    }
 }
 
 int main (int argc, char **argv) {
-   struct options options = {FALSE, FALSE};
-   int parsecode = 0;
-   set_execname (argv[0]);
-   DEBUGSTMT ('m',
-      for (int argi = 0; argi < argc; ++argi) {
-         eprintf ("%s%c", argv[argi], argi < argc - 1 ? ' ' : '\n');
-      }
-   );
-   scan_opts (argc, argv, &options);
-   scanner_setecho (options.echoinput);
-   parsecode = yyparse();
-   if (parsecode) {
-      errprintf ("%:parse failed (%d)\n", parsecode);
-   }else {
-      DEBUGSTMT ('a', dump_astree (stderr, yyparse_astree); );
-      emit_sm_code (yyparse_astree);
-   }
-   freeast (yyparse_astree);
-   yyin_cpp_pclose();
-   return get_exitstatus();
+
+	stringtable_ref str_table = new_stringtable();
+	intern_stringtable(str_table, "hello world");
+
+    progname = basename (argv[0]);
+    for (int argi = 1; argi < argc; ++argi) {
+       char *filename = argv[argi];
+       char command[strlen (CPP) + 1 + strlen (filename) + 1];
+       strcpy (command, CPP);
+       strcat (command, " ");
+       strcat (command, filename);
+       printf ("command=\"%s\"\n", command);
+       FILE *pipe = popen (command, "r");
+       if (pipe == NULL) {
+          syswarn (command);
+       }else {
+          cpplines (pipe, filename);
+          pclose (pipe);
+       }
+    }
+    return EXIT_SUCCESS;
 }
-
-
-
-
 

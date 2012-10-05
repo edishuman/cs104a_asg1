@@ -1,9 +1,17 @@
 //Operate as a hash table
+#ifndef __STRINGTABLE_H__
+#define __STRINGTABLE_H__
+
+#include <inttypes.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
+#include <string.h>
 
 typedef char *cstring;
 
 typedef uint32_t hashcode_t;
-     Type type uint32_t is defined in <inttypes.h>.
+     /*Type type uint32_t is defined in <inttypes.h>.*/
 
 typedef struct stringtable *stringtable_ref;
      /*A handle pointing at the entire hash table.  Returned by the
@@ -66,7 +74,7 @@ hashcode_t hashcode_stringtable (stringnode_ref);
      /*Returns the cached hash number associated with this string node.
      Does not recompute the number.*/
      
-     
+#endif
      
      
      
