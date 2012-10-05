@@ -74,6 +74,8 @@ hashcode_t hashcode_stringtable (stringnode_ref);
      /*Returns the cached hash number associated with this string node.
      Does not recompute the number.*/
      
+void realloc_stringtable(stringtable_ref);
+     
 #endif
      
      
