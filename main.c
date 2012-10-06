@@ -39,7 +39,7 @@ void chomp (char *string, char delim) {
 }
 
 // Run cpp against the lines of the file.
-void cpplines (FILE *pipe, char *filename) {
+void cpplines (FILE *pipe, char *filename, stringtable_ref str_table) {
     int linenr = 1;
     char inputname[LINESIZE];
     strcpy (inputname, filename);
@@ -62,6 +62,7 @@ void cpplines (FILE *pipe, char *filename) {
           char *token = strtok_r (bufptr, " \t\n", &savepos);
           bufptr = NULL;
           if (token == NULL) break;
+          intern_stringtable(str_table, token);
           //printf ("token %d.%d: [%s]\n", linenr, tokenct, token);
        }
        ++linenr;
@@ -69,9 +70,11 @@ void cpplines (FILE *pipe, char *filename) {
 }
 
 int main (int argc, char **argv) {
+	//fileptr determined by user, use it as input for debugdumpstrtable
+	//depending on getopt
 
 	stringtable_ref str_table = new_stringtable();
-	intern_stringtable(str_table, "hello world");
+	
 
     progname = basename (argv[0]);
     for (int argi = 1; argi < argc; ++argi) {
@@ -85,10 +88,14 @@ int main (int argc, char **argv) {
        if (pipe == NULL) {
           syswarn (command);
        }else {
-          cpplines (pipe, filename);
+          cpplines (pipe, filename, str_table);
           pclose (pipe);
        }
     }
+    
+    debugdump_stringtable(str_table, stdout);
+    delete_stringtable(str_table);
+    
     return EXIT_SUCCESS;
 }
 

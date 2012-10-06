@@ -35,23 +35,53 @@ stringtable_ref new_stringtable(void) {
 	
 	return new_table;
 }
-/*
-void debugdump_stringtable(stringtable_ref table, FILE* file_ptr) {
-	
 
+void delete_stringtable (stringtable_ref table) {
+	for (size_t i = 0; i < table->table_length; i++) {
+		stringnode_ref node_ref = table->node_ref_array[i];
+		stringnode_ref temp_node = NULL;
+	
+		while (node_ref != NULL) {				
+			temp_node = node_ref;
+			node_ref = node_ref->next;
+			free(temp_node->string_entry);
+			free(temp_node);
+		}
+	}
+	
+	free(table->node_ref_array);
+	free(table);
 }
-*/
+
+void debugdump_stringtable(stringtable_ref table, FILE* file_ptr) {
+	for (size_t i = 0; i < table->table_length; i++) {
+		stringnode_ref node_ref = table->node_ref_array[i];
+	
+		if (node_ref != NULL) {
+			fprintf(file_ptr, "%8Zu%12u   %s\n", i, node_ref->hash_code, 
+					node_ref->string_entry);
+			node_ref = node_ref->next;
+		}
+		while (node_ref != NULL) {			
+			fprintf(file_ptr, "%12u   %s\n", node_ref->hash_code,
+					node_ref->string_entry);
+			node_ref = node_ref->next;
+		}
+	
+	}
+}
+
 	
 stringnode_ref intern_stringtable(stringtable_ref table, cstring str) {
 	char *str_buffer = NULL;
-	str_buffer = strndup(str, 128);
+	str_buffer = strdup(str);
 	
 	hashcode_t hashVal = strhash(str_buffer) % table->table_length;
 	
 	stringnode_ref node_ref = table->node_ref_array[hashVal];
 	
 	//Collision probing by linked list of node_ref
-	while (node_ref != NULL) {			//If the word exists, go next node
+	while (node_ref != NULL) {			//If the node exists, go next node
 		if (node_ref->hash_code == hashVal)
 			return node_ref;
 		node_ref = node_ref->next;
@@ -59,16 +89,24 @@ stringnode_ref intern_stringtable(stringtable_ref table, cstring str) {
 	
 	stringnode_ref new_node = malloc(sizeof (struct stringnode));
 	table->node_ref_array[hashVal] = new_node;
-	new_node->hash_code = hashVal;
+	new_node->hash_code = strhash(str_buffer);
 	new_node->string_entry = str_buffer;
 	new_node->next = NULL;
 	
 	table->entries += 1;
 	table->load = (double) (table->entries) / (table->table_length);
 	
-	if (table->load >= 0.4) {
+	if (table->load >= 0.5) {
 		realloc_stringtable(table);
 	}
+	
+	//DEBUG PRINTF
+	/*
+	printf("DEBUGF hashheader:%u hashno:%12u string:%s\n", 
+			hashVal, 
+			table->node_ref_array[hashVal]->hash_code, 
+			table->node_ref_array[hashVal]->string_entry);
+	*/
 	
 	return new_node;
 }
@@ -90,8 +128,7 @@ void realloc_stringtable(stringtable_ref table) {
 	for (int i = 0; i < old_length; i++) {
 		//Go through all the nodes in the linked list of old table
 		stringnode_ref old_node_ref = table->node_ref_array[i];
-		while (old_node_ref != NULL) {
-			old_node_ref = old_node_ref->next;
+		while (old_node_ref != NULL) {	
 			hashcode_t hashVal = old_node_ref->hash_code % new_length;
 
 			//Skip filled nodes in the linked list of new table
@@ -101,6 +138,7 @@ void realloc_stringtable(stringtable_ref table) {
 			}
 			
 			new_node_ref = old_node_ref;
+			old_node_ref = old_node_ref->next;
 		}
 	}
 	
