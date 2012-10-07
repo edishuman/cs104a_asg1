@@ -97,7 +97,7 @@ stringnode_ref intern_stringtable(stringtable_ref table, cstring str) {
 	new_node->string_entry = str_buffer;
 	new_node->next = NULL;
 	
-	DEBUGF('p', "hashheader: %u \thashno: %12u \tstring: %s\n", 
+	DEBUGF('s', "hashheader: %u \thashno: %12u \tstring: %s\n", 
 			hashVal, 
 			table->node_ref_array[hashVal]->hash_code, 
 			table->node_ref_array[hashVal]->string_entry);

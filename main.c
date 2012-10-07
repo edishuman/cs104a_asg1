@@ -20,8 +20,9 @@
 #include "auxlib.h"
 
 int dump_tree;
-int exit_status = EXIT_SUCCESS;
 char *progname;
+char cpp_opt[50] = "";
+int exit_status = EXIT_SUCCESS;
 
 // Print a warning after a failed system call.
 void syswarn (char *problem) {
@@ -41,17 +42,17 @@ void chomp (char *string, char delim) {
 }
 
 // Run cpp against the lines of the file.
-void cpplines (FILE *pipe, char *filename, stringtable_ref str_table) {
+void cpplines (FILE *pipe, char *input_file, stringtable_ref str_table) {
     int linenr = 1;
     char inputname[LINESIZE];
-    strcpy (inputname, filename);
+    strcpy (inputname, input_file);
     for (;;) {
        char buffer[LINESIZE];
        char *fgets_rc = fgets (buffer, LINESIZE, pipe);
        if (fgets_rc == NULL) break;
        chomp (buffer, '\n');
        int sscanf_rc = sscanf (buffer, "# %d \"%[^\"]\"",
-                               &linenr, filename);
+                               &linenr, input_file);
        if (sscanf_rc == 2) {
           continue;
        }
@@ -72,13 +73,13 @@ void scan_opts (int argc, char **argv) {
    opterr = 0;
 
    for(;;) {
-      option = getopt (argc, argv, "@:d:ly");
+      option = getopt (argc, argv, "@:D:ly");
       if (option == EOF) break;
       switch (option) {
-         case '@': set_debugflags (optarg); break;
-         case 'd': printf("case: d option: %s\n", optarg); break;
-         case 'l': printf("yy_flex_debug = 1\n");       	  break;
-         case 'y': printf("yydebug = 1\n");	              break;
+         case '@': set_debugflags (optarg); 			break;
+         case 'D': sprintf(cpp_opt, "-D %s ", optarg); 	break;
+         case 'l': printf("yy_flex_debug = 1\n");       break;
+         case 'y': printf("yydebug = 1\n");	            break;
          default:  errprintf ("%:bad option (%c)\n", optopt); break;
       }
    }
@@ -86,37 +87,47 @@ void scan_opts (int argc, char **argv) {
       errprintf ("Usage: %s [-ly] [filename]\n", get_execname());
       exit (get_exitstatus());
    }
-   char *filename = optind == argc ? "-" : argv[optind];
-
-   DEBUGF ('m', "filename = %s\n", filename);
-
 }
 
-int main (int argc, char **argv) {
-	set_execname(argv[0]);
-
+int main (int argc, char **argv) { 
+	char *input_file;
 	stringtable_ref str_table = new_stringtable();
-	scan_opts(argc, argv);
 	
-    progname = basename (argv[0]);
-
-    char *filename = argv[optind];
-    char command[strlen (CPP) + 1 + strlen (filename) + 1];
+	progname = basename (argv[0]);
+	set_execname(argv[0]);
+	scan_opts(argc, argv);
+	input_file = argv[optind];
+	
+	
+    char command[strlen (CPP) + 1 + strlen (input_file) + 1];
     strcpy (command, CPP);
     strcat (command, " ");
-    strcat (command, filename);
+    strcat (command, cpp_opt);
+    strcat (command, input_file);
     printf ("command=\"%s\" progname=\"%s\"\n", command, progname);
+    
     FILE *pipe = popen (command, "r");
     if (pipe == NULL) {
        syswarn (command);
     } else {
-       cpplines (pipe, filename, str_table);
+       cpplines (pipe, input_file, str_table);
        pclose (pipe);
     }
-
-    debugdump_stringtable(str_table, stderr);
+	
+	
+	//Determine file name to write output to
+	char *p = strrchr(input_file, '.');
+	int len = p-input_file;
+	char outputfile[len + 5];
+	strncpy(outputfile, input_file, len);
+	strcat(outputfile, ".str");
+	
+	FILE *writeto = fopen(outputfile, "w");
+	
+    debugdump_stringtable(str_table, writeto);
     delete_stringtable(str_table);
     
+    fclose(writeto);
     return EXIT_SUCCESS;
 }
 

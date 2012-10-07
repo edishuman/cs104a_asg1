@@ -55,9 +55,7 @@ ci : ${ALLSRC} ${TESTINS}
 # Clean and spotless remove generated files.
 #
 clean :
-	- rm ${OBJECTS} ${REPORTS} ${DEPSFILE} core
-	- rm ${foreach test, ${TESTINS:.in=}, \
-		${patsubst %, ${test}.%, out err log}}
+	- rm ${OBJECTS} *.str oc
 
 spotless : clean
 	- rm ${EXECBIN} List.*.ps List.*.pdf
@@ -68,10 +66,6 @@ spotless : clean
 deps : ${ALLCSRC}
 	@ echo "# ${DEPSFILE} created `date` by ${MAKE}" >${DEPSFILE}
 	${MKDEPS} ${ALLCSRC} >>${DEPSFILE}
-
-${DEPSFILE} :
-	@ touch ${DEPSFILE}
-	${MAKE} --no-print-directory deps
 
 #
 # Everything
