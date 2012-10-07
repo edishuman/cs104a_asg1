@@ -40,6 +40,10 @@ void delete_stringtable (stringtable_ref table) {
 	for (size_t i = 0; i < table->table_length; i++) {
 		stringnode_ref node_ref = table->node_ref_array[i];
 		stringnode_ref temp_node = NULL;
+		
+		if (node_ref == NULL) {
+			free(node_ref);
+		}
 	
 		while (node_ref != NULL) {				
 			temp_node = node_ref;
@@ -93,21 +97,18 @@ stringnode_ref intern_stringtable(stringtable_ref table, cstring str) {
 	new_node->string_entry = str_buffer;
 	new_node->next = NULL;
 	
+	DEBUGF('p', "hashheader: %u \thashno: %12u \tstring: %s\n", 
+			hashVal, 
+			table->node_ref_array[hashVal]->hash_code, 
+			table->node_ref_array[hashVal]->string_entry);
+	
 	table->entries += 1;
 	table->load = (double) (table->entries) / (table->table_length);
 	
 	if (table->load >= 0.5) {
 		realloc_stringtable(table);
 	}
-	
-	//DEBUG PRINTF
-	/*
-	printf("DEBUGF hashheader:%u hashno:%12u string:%s\n", 
-			hashVal, 
-			table->node_ref_array[hashVal]->hash_code, 
-			table->node_ref_array[hashVal]->string_entry);
-	*/
-	
+
 	return new_node;
 }
 

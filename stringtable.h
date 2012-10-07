@@ -75,6 +75,11 @@ hashcode_t hashcode_stringtable (stringnode_ref);
      Does not recompute the number.*/
      
 void realloc_stringtable(stringtable_ref);
+	/*Reallocates string table if load factor > 0.5. Size of the table
+	increases by 2^n - 1. No memory allocation occurs here, only a 
+	change of the stringtable and which stringnode_ref is pointed to.
+	Hash value stays the same, modulo the value with size of new
+	stringtable.*/
      
 #endif
      
