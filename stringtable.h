@@ -8,10 +8,12 @@
 #include <assert.h>
 #include <string.h>
 
-typedef char *cstring;
-
+#ifndef __HASH_DEF__
 typedef uint32_t hashcode_t;
      /*Type type uint32_t is defined in <inttypes.h>.*/
+#endif
+
+typedef char *cstring;
 
 typedef struct stringtable *stringtable_ref;
      /*A handle pointing at the entire hash table.  Returned by the
@@ -82,30 +84,5 @@ void realloc_stringtable(stringtable_ref);
 	stringtable.*/
      
 #endif
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
+    
      

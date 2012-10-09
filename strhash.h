@@ -25,7 +25,9 @@
 #include <inttypes.h>
 #include "auxlib.h"
 
+#ifndef __HASH_DEF__
 typedef uint32_t hashcode_t;
+#endif
 
 hashcode_t strhash (char *string);
 

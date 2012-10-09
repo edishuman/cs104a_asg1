@@ -98,13 +98,11 @@ int main (int argc, char **argv) {
 	scan_opts(argc, argv);
 	input_file = argv[optind];
 	
-	
     char command[strlen (CPP) + 1 + strlen (input_file) + 1];
     strcpy (command, CPP);
     strcat (command, " ");
     strcat (command, cpp_opt);
     strcat (command, input_file);
-    printf ("command=\"%s\" progname=\"%s\"\n", command, progname);
     
     FILE *pipe = popen (command, "r");
     if (pipe == NULL) {
@@ -114,7 +112,6 @@ int main (int argc, char **argv) {
        pclose (pipe);
     }
 	
-	
 	//Determine file name to write output to
 	char *p = strrchr(input_file, '.');
 	int len = p-input_file;
@@ -122,6 +119,7 @@ int main (int argc, char **argv) {
 	strncpy(outputfile, input_file, len);
 	strcat(outputfile, ".str");
 	
+	//Create file with .str extension and write to it
 	FILE *writeto = fopen(outputfile, "w");
 	
     debugdump_stringtable(str_table, writeto);
