@@ -1,4 +1,4 @@
-//Operate as a hash table
+
 #ifndef __STRINGTABLE_H__
 #define __STRINGTABLE_H__
 
@@ -7,6 +7,8 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
+
+#include "strhash.h"
 
 #ifndef __HASH_DEF__
 typedef uint32_t hashcode_t;

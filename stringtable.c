@@ -1,8 +1,7 @@
 
 #include "stringtable.h"
-#include "strhash.h"
 
-#define TABLE_NEW_SIZE 15
+#define TABLE_NEW_SIZE 31
 
 struct stringnode {			//typedefd as *stringnode_ref
 	uint32_t hash_code;
@@ -28,11 +27,6 @@ stringtable_ref new_stringtable(void) {
 	
 	memset(new_table->node_ref_array, 0, new_table->table_length * 
 			sizeof (stringnode_ref));
-	/*
-	for (size_t index = 0; index < new_table->table_length; index++) {
-		new_table->node_ref_array[index] = NULL;
-	}
-	*/
 	
 	assert (new_table->node_ref_array != NULL);
 	
@@ -76,11 +70,9 @@ void debugdump_stringtable(stringtable_ref table, FILE* file_ptr) {
 		}
 	}
 }
-
 	
 stringnode_ref intern_stringtable(stringtable_ref table, cstring str) {
-	char *str_buffer = NULL;
-	str_buffer = strdup(str);
+	char *str_buffer = strdup(str);
 	
 	hashcode_t hashVal = strhash(str_buffer) % table->table_length;
 	
@@ -108,8 +100,7 @@ stringnode_ref intern_stringtable(stringtable_ref table, cstring str) {
 	else
 		node_ref->next = new_node;
 	
-	
-	DEBUGF('s', "hashheader: %u \thashno: %12u \tstring: %s\n", 
+	DEBUGF('a', "hashheader: %u \thashno: %12u \tstring: %s\n", 
 			hashVal, 
 			table->node_ref_array[hashVal]->hash_code, 
 			table->node_ref_array[hashVal]->string_entry);
@@ -117,33 +108,13 @@ stringnode_ref intern_stringtable(stringtable_ref table, cstring str) {
 	table->entries += 1;
 	table->load = (double) (table->entries) / (table->table_length);
 	
-	if (table->load >= 0.4) 
+	if (table->load >= 0.5) 
 		realloc_stringtable(table);
 
 	return new_node;
 }
 
 void realloc_stringtable(stringtable_ref table) {
-	/*
-	printf("BEFORE REALLOCING\n");
-	for (size_t i = 0; i < table->table_length; i++) {
-		stringnode_ref node_ref = table->node_ref_array[i];
-	
-		if (node_ref != NULL) {
-			printf("%8Zu%12u   %s\n", i, node_ref->hash_code, 
-					node_ref->string_entry);
-			node_ref = node_ref->next;
-		}
-		
-		while (node_ref != NULL) {			
-			printf("%20u   %s\n", node_ref->hash_code,
-					node_ref->string_entry);
-			node_ref = node_ref->next;
-		}
-	
-	}
-	*/
-
 	int old_length = table->table_length;
 	int new_length = (table->table_length)*2 + 1;
 	table->table_length = new_length;
@@ -151,10 +122,7 @@ void realloc_stringtable(stringtable_ref table) {
 	//new_array will replace table array in the stringtable_ref pointer
 	stringnode_ref *new_array = malloc(new_length * sizeof(stringnode_ref));
 	assert(new_array != NULL);
-	
-	for (int index = 0; index < new_length; index++) {
-		new_array[index] = NULL;
-	}
+	memset(new_array, 0, new_length * sizeof(stringnode_ref));
 	
 	//Moving all entries from old table into new table
 	for (int i = 0; i < old_length; i++) {
@@ -163,7 +131,7 @@ void realloc_stringtable(stringtable_ref table) {
 		while (old_node_ref != NULL) {	
 			hashcode_t hashVal = old_node_ref->hash_code % new_length;
 			
-			//printf("%d %s\n", hashVal, old_node_ref->string_entry);
+			DEBUGF('a', "%d %s\n", hashVal, old_node_ref->string_entry);
 
 			//Skip filled nodes in the linked list of new table
 			stringnode_ref new_node_ref = new_array[hashVal];
@@ -182,7 +150,7 @@ void realloc_stringtable(stringtable_ref table) {
 			}
 			
 			new_node_ref->next = old_node_ref;
-			old_node_ref = old_node_ref->next;
+			old_node_ref = old_node_ref->next;	// bc lists are linked, we have to sever
 			new_node_ref->next->next = NULL;
 		}
 	}
@@ -190,26 +158,6 @@ void realloc_stringtable(stringtable_ref table) {
 	free (table->node_ref_array);
 	
 	table->node_ref_array = new_array;
-	/*
-	printf("AFTER REALLOCING\n");
-	for (size_t i = 0; i < table->table_length; i++) {
-		stringnode_ref node_ref = table->node_ref_array[i];
-	
-		if (node_ref != NULL) {
-			printf("%8Zu%12u   %s\n", i, node_ref->hash_code, 
-					node_ref->string_entry);
-			node_ref = node_ref->next;
-		}
-		
-		while (node_ref != NULL) {			
-			printf("%20u   %s\n", node_ref->hash_code,
-					node_ref->string_entry);
-			node_ref = node_ref->next;
-		}
-	
-	}
-	printf("\n\n\n\n\n");
-	*/
 }
 	
 cstring peek_stringtable(stringnode_ref node_ref) {

@@ -1,4 +1,3 @@
-// $Id: cppstrtok.c,v 1.14 2011-10-03 20:20:08-07 - - $
 
 // Use cpp to scan a file and print line numbers.
 // Print out each input line read in, then strtok it for
@@ -17,7 +16,6 @@
 #include <unistd.h>
 
 #include "stringtable.h"
-#include "auxlib.h"
 
 int dump_tree;
 char *progname;
@@ -62,7 +60,6 @@ void cpplines (FILE *pipe, char *input_file, stringtable_ref str_table) {
           char *token = strtok_r (bufptr, " \t\n", &savepos);
           bufptr = NULL;
           if (token == NULL) break;
-          //printf("token %s\n", token);
           intern_stringtable(str_table, token);
        }
        ++linenr;

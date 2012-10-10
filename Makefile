@@ -55,7 +55,7 @@ ci : ${ALLSRC} ${TESTINS}
 # Clean and spotless remove generated files.
 #
 clean :
-	- rm ${OBJECTS} ${DEPSFILE} *.str oc
+	- rm ${OBJECTS} ${DEPSFILE} *.str oc core
 
 spotless : clean
 	- rm ${EXECBIN} List.*.ps List.*.pdf
