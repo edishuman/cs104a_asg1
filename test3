@@ -1,0 +1,3 @@
+I teach a sort of "lite" C++ programming course to novices ("lite" meaning no pointers, no classes, just plain old C, plus references and STL string and vectors). Students have no previous experience in programming, so I believe that using an interactive debugger would help them understand program flow, variables, and recursion.
+
+The course is taught in Linux. Teaching them to use gdb is just overkill (they will not use nor understand most features). I just need something simple but easy to use: to see at which line the program is now, what is in the stack (local variables, previous calls, etc.). I look something similar to old Turbo Pascal or Turbo C++ Borland's debugger, or Visual Studio debugger.

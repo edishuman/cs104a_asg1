@@ -26,9 +26,13 @@ stringtable_ref new_stringtable(void) {
 	new_table->node_ref_array = malloc(new_table->table_length * 
 								  sizeof (stringnode_ref));
 	
+	memset(new_table->node_ref_array, 0, new_table->table_length * 
+			sizeof (stringnode_ref));
+	/*
 	for (size_t index = 0; index < new_table->table_length; index++) {
 		new_table->node_ref_array[index] = NULL;
 	}
+	*/
 	
 	assert (new_table->node_ref_array != NULL);
 	
@@ -66,11 +70,10 @@ void debugdump_stringtable(stringtable_ref table, FILE* file_ptr) {
 			node_ref = node_ref->next;
 		}
 		while (node_ref != NULL) {			
-			fprintf(file_ptr, "%12u   %s\n", node_ref->hash_code,
+			fprintf(file_ptr, "%20u   %s\n", node_ref->hash_code,
 					node_ref->string_entry);
 			node_ref = node_ref->next;
 		}
-	
 	}
 }
 
@@ -84,33 +87,26 @@ stringnode_ref intern_stringtable(stringtable_ref table, cstring str) {
 	stringnode_ref node_ref = table->node_ref_array[hashVal];
 	
 	stringnode_ref new_node = malloc(sizeof (struct stringnode));
+	assert(new_node != NULL);
+	memset(new_node, 0, sizeof (struct stringnode));
+	
 	new_node->hash_code = strhash(str_buffer);
 	new_node->string_entry = str_buffer;
 	new_node->next = NULL;
 	
-	if (node_ref == NULL) {
-		table->node_ref_array[hashVal] = new_node;
-		table->entries += 1;
-		table->load = (double) (table->entries) / (table->table_length);
-	
-		if (table->load >= 0.5) {
-			realloc_stringtable(table);
-		}
-		return new_node;
-	}
-
-		
-	
 	//Collision probing by linked list of node_ref
 	while (node_ref != NULL) {			//If the node exists, go next node
-		if (node_ref->hash_code == hashVal)
+		if (node_ref->hash_code == new_node->hash_code)
 			return node_ref;
 		if (node_ref->next == NULL)
 			break;
 		node_ref = node_ref->next;
 	}
 	
-	node_ref->next = new_node;
+	if (table->node_ref_array[hashVal] == NULL)
+		table->node_ref_array[hashVal] = new_node;
+	else
+		node_ref->next = new_node;
 	
 	
 	DEBUGF('s', "hashheader: %u \thashno: %12u \tstring: %s\n", 
@@ -121,14 +117,33 @@ stringnode_ref intern_stringtable(stringtable_ref table, cstring str) {
 	table->entries += 1;
 	table->load = (double) (table->entries) / (table->table_length);
 	
-	if (table->load >= 0.5) {
+	if (table->load >= 0.4) 
 		realloc_stringtable(table);
-	}
 
 	return new_node;
 }
 
 void realloc_stringtable(stringtable_ref table) {
+	/*
+	printf("BEFORE REALLOCING\n");
+	for (size_t i = 0; i < table->table_length; i++) {
+		stringnode_ref node_ref = table->node_ref_array[i];
+	
+		if (node_ref != NULL) {
+			printf("%8Zu%12u   %s\n", i, node_ref->hash_code, 
+					node_ref->string_entry);
+			node_ref = node_ref->next;
+		}
+		
+		while (node_ref != NULL) {			
+			printf("%20u   %s\n", node_ref->hash_code,
+					node_ref->string_entry);
+			node_ref = node_ref->next;
+		}
+	
+	}
+	*/
+
 	int old_length = table->table_length;
 	int new_length = (table->table_length)*2 + 1;
 	table->table_length = new_length;
@@ -148,7 +163,7 @@ void realloc_stringtable(stringtable_ref table) {
 		while (old_node_ref != NULL) {	
 			hashcode_t hashVal = old_node_ref->hash_code % new_length;
 			
-			printf("%d %s\n", hashVal, old_node_ref->string_entry);
+			//printf("%d %s\n", hashVal, old_node_ref->string_entry);
 
 			//Skip filled nodes in the linked list of new table
 			stringnode_ref new_node_ref = new_array[hashVal];
@@ -156,6 +171,7 @@ void realloc_stringtable(stringtable_ref table) {
 			if (new_array[hashVal] == NULL) {
 				new_array[hashVal] = old_node_ref;
 				old_node_ref = old_node_ref->next;
+				new_array[hashVal]->next = NULL;
 				continue;
 			}
 			
@@ -167,28 +183,16 @@ void realloc_stringtable(stringtable_ref table) {
 			
 			new_node_ref->next = old_node_ref;
 			old_node_ref = old_node_ref->next;
-			
-			/*
-			if (new_array[hashVal] == NULL)
-				printf("node %d is NULL2\n", hashVal);
-			
-			printf("%d %s\n", hashVal, new_array[hashVal]->string_entry);
-			*/
+			new_node_ref->next->next = NULL;
 		}
 	}
 	
 	free (table->node_ref_array);
 	
 	table->node_ref_array = new_array;
-	
 	/*
-	printf("\nstring %s hashcode %d\n\n", 
-			table->node_ref_array[8]->string_entry, 
-			table->node_ref_array[8]->hash_code);
-	
-	//test debug
+	printf("AFTER REALLOCING\n");
 	for (size_t i = 0; i < table->table_length; i++) {
-		printf("iter %Zu\n", i);
 		stringnode_ref node_ref = table->node_ref_array[i];
 	
 		if (node_ref != NULL) {
@@ -198,14 +202,14 @@ void realloc_stringtable(stringtable_ref table) {
 		}
 		
 		while (node_ref != NULL) {			
-			printf("%12u   %s\n", node_ref->hash_code,
+			printf("%20u   %s\n", node_ref->hash_code,
 					node_ref->string_entry);
 			node_ref = node_ref->next;
 		}
 	
 	}
+	printf("\n\n\n\n\n");
 	*/
-		
 }
 	
 cstring peek_stringtable(stringnode_ref node_ref) {

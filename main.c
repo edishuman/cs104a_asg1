@@ -62,6 +62,7 @@ void cpplines (FILE *pipe, char *input_file, stringtable_ref str_table) {
           char *token = strtok_r (bufptr, " \t\n", &savepos);
           bufptr = NULL;
           if (token == NULL) break;
+          //printf("token %s\n", token);
           intern_stringtable(str_table, token);
        }
        ++linenr;
@@ -97,6 +98,11 @@ int main (int argc, char **argv) {
 	set_execname(argv[0]);
 	scan_opts(argc, argv);
 	input_file = argv[optind];
+	
+	if (input_file == NULL) {
+	    errprintf ("%:bad input %s\n", input_file);
+	    exit(1);
+	}
 	
     char command[strlen (CPP) + 1 + strlen (input_file) + 1];
     strcpy (command, CPP);
