@@ -1,28 +1,19 @@
 
 MKFILE    = Makefile
 DEPSFILE  = ${MKFILE}.deps
-NOINCLUDE = ci clean spotless
-NEEDINCL  = ${filter ${NOINCLUDE}, ${MAKECMDGOALS}}
 
 #
 # Definitions of list of files:
 #
-HSOURCES  = astree.h astree.rep.h emit.h lyutils.h auxlib.h strhash.h stringtable.h
-CSOURCES  = astree.c emit.c lyutils.c main.c auxlib.c strhash.c stringtable.c
-LSOURCES  = scanner.l
-YSOURCES  = parser.y
+HSOURCES  = auxlib.h strhash.h stringtable.h
+CSOURCES  = main.c auxlib.c strhash.c stringtable.c
 ETCSRC    = README ${MKFILE} ${DEPSFILE}
-CLGEN     = yylex.c
-HYGEN     = yyparse.h
-CYGEN     = yyparse.c
-CGENS     = ${CLGEN} ${CYGEN}
-ALLGENS   = ${HYGEN} ${CGENS}
 EXECBIN   = oc
-ALLCSRC   = ${CSOURCES} ${CGENS}
+ALLCSRC   = ${CSOURCES}
 OBJECTS   = ${ALLCSRC:.c=.o}
-ALLSRC    = ${ETCSRC} ${YSOURCES} ${LSOURCES} ${HSOURCES} ${CSOURCES}
-TESTINS   = ${wildcard test?.in}
-LISTSRC   = ${ALLSRC} ${HYGEN}
+ALLSRC    = ${ETCSRC} ${HSOURCES} ${CSOURCES}
+TESTINS   = ${wildcard test*.in}
+LISTSRC   = ${ALLSRC}
 
 #
 # Definitions of the compiler and compilation options:
@@ -37,7 +28,6 @@ MKDEPS    = gcc -MM
 #
 all : ${EXECBIN}
 
-#
 # Build the executable image from the object files.
 #
 ${EXECBIN} : ${OBJECTS}
@@ -56,26 +46,19 @@ lint : ${CSOURCES}
 	${LINT} ${LINTOPT} ${CSOURCES}
 
 #
-# Build the scanner.
+# Check sources into an RCS subdirectory.
 #
-${CLGEN} : ${LSOURCES}
-	flex -o${CLGEN} ${LSOURCES}
-	- rm lex.backup
-
-#
-# Build the parser.
-#
-${CYGEN} ${HYGEN} : ${YSOURCES}
-	bison -dtv -o${CYGEN} ${YSOURCES}
+ci : ${ALLSRC} ${TESTINS}
+	cid + ${ALLSRC} ${TESTINS}
 
 #
 # Clean and spotless remove generated files.
 #
 clean :
-	- rm ${OBJECTS} ${ALLGENS} ${DEPSFILE}
+	- rm ${OBJECTS} ${DEPSFILE} *.str oc core
 
 spotless : clean
-	- rm ${EXECBIN}
+	- rm ${EXECBIN} List.*.ps List.*.pdf
 
 #
 # Build the dependencies file using the C preprocessor
@@ -88,7 +71,11 @@ ${DEPSFILE} :
 	@ touch ${DEPSFILE}
 	${MAKE} --no-print-directory deps
 
-ifeq "${NEEDINCL}" ""
-include ${DEPSFILE}
-endif
+#
+# Everything
+#
+again :
+	gmake --no-print-directory spotless deps ci lint all lis
+	
+
 

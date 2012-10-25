@@ -138,4 +138,3 @@ void __debugprintf (char flag, char *file, int line, const char *func,
 // LINTED(static unused)
 RCSC(AUXLIB_C,"$Id: auxlib.c,v 1.14 2012-10-11 18:22:20-07 - - $")
 
-

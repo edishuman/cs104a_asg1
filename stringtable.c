@@ -19,16 +19,15 @@ struct stringtable {		//typedefd as *stringtable_ref
 stringtable_ref new_stringtable(void) {
 	stringtable_ref new_table = malloc(sizeof (struct stringtable));
 	assert(new_table != NULL);
+	
 	new_table->table_length = TABLE_NEW_SIZE;
 	new_table->entries = 0;
 	new_table->load = 0;
 	new_table->node_ref_array = malloc(new_table->table_length * 
 								  sizeof (stringnode_ref));
-	
+	assert (new_table->node_ref_array != NULL);
 	memset(new_table->node_ref_array, 0, new_table->table_length * 
 			sizeof (stringnode_ref));
-	
-	assert (new_table->node_ref_array != NULL);
 	
 	return new_table;
 }
@@ -38,9 +37,8 @@ void delete_stringtable (stringtable_ref table) {
 		stringnode_ref node_ref = table->node_ref_array[i];
 		stringnode_ref temp_node = NULL;
 		
-		if (node_ref == NULL) {
+		if (node_ref == NULL)
 			free(node_ref);
-		}
 	
 		while (node_ref != NULL) {				
 			temp_node = node_ref;
@@ -63,7 +61,7 @@ void debugdump_stringtable(stringtable_ref table, FILE* file_ptr) {
 					node_ref->string_entry);
 			node_ref = node_ref->next;
 		}
-		while (node_ref != NULL) {			
+		while (node_ref != NULL) {
 			fprintf(file_ptr, "%20u   %s\n", node_ref->hash_code,
 					node_ref->string_entry);
 			node_ref = node_ref->next;
@@ -73,14 +71,11 @@ void debugdump_stringtable(stringtable_ref table, FILE* file_ptr) {
 	
 stringnode_ref intern_stringtable(stringtable_ref table, cstring str) {
 	char *str_buffer = strdup(str);
-	
 	hashcode_t hashVal = strhash(str_buffer) % table->table_length;
-	
 	stringnode_ref node_ref = table->node_ref_array[hashVal];
 	
 	stringnode_ref new_node = malloc(sizeof (struct stringnode));
 	assert(new_node != NULL);
-	memset(new_node, 0, sizeof (struct stringnode));
 	
 	new_node->hash_code = strhash(str_buffer);
 	new_node->string_entry = str_buffer;
@@ -132,8 +127,7 @@ void realloc_stringtable(stringtable_ref table) {
 			hashcode_t hashVal = old_node_ref->hash_code % new_length;
 			
 			DEBUGF('a', "%d %s\n", hashVal, old_node_ref->string_entry);
-
-			//Skip filled nodes in the linked list of new table
+			
 			stringnode_ref new_node_ref = new_array[hashVal];
 			
 			if (new_array[hashVal] == NULL) {
@@ -143,6 +137,7 @@ void realloc_stringtable(stringtable_ref table) {
 				continue;
 			}
 			
+			//Skip filled nodes in the linked list of new table
 			while (new_node_ref != NULL) {
 				if (new_node_ref->next == NULL)
 					break;
@@ -150,8 +145,8 @@ void realloc_stringtable(stringtable_ref table) {
 			}
 			
 			new_node_ref->next = old_node_ref;
-			old_node_ref = old_node_ref->next;	// bc lists are linked, we have to sever
-			new_node_ref->next->next = NULL;
+			old_node_ref = old_node_ref->next;	
+			new_node_ref->next->next = NULL;	// bc lists are linked, we have to sever
 		}
 	}
 	

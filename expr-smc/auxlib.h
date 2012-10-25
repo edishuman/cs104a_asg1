@@ -2,7 +2,6 @@
 #define __AUXLIB_H__
 
 #include <stdarg.h>
-#include <stdbool.h>
 
 //
 // DESCRIPTION
@@ -123,4 +122,3 @@ static const char __RCS_C_##NAME[] = "\0" ID \
 // LINTED(static unused)
 RCSH(AUXLIB_H,"$Id: auxlib.h,v 1.9 2012-10-11 18:22:20-07 - - $")
 #endif
-

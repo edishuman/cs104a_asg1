@@ -7,8 +7,8 @@ NEEDINCL  = ${filter ${NOINCLUDE}, ${MAKECMDGOALS}}
 #
 # Definitions of list of files:
 #
-HSOURCES  = astree.h astree.rep.h emit.h lyutils.h auxlib.h strhash.h stringtable.h
-CSOURCES  = astree.c emit.c lyutils.c main.c auxlib.c strhash.c stringtable.c
+HSOURCES  = astree.h astree.rep.h emit.h lyutils.h auxlib.h
+CSOURCES  = astree.c emit.c lyutils.c main.c auxlib.c
 LSOURCES  = scanner.l
 YSOURCES  = parser.y
 ETCSRC    = README ${MKFILE} ${DEPSFILE}
@@ -17,9 +17,13 @@ HYGEN     = yyparse.h
 CYGEN     = yyparse.c
 CGENS     = ${CLGEN} ${CYGEN}
 ALLGENS   = ${HYGEN} ${CGENS}
-EXECBIN   = oc
+EXECBIN   = zexprsm
 ALLCSRC   = ${CSOURCES} ${CGENS}
 OBJECTS   = ${ALLCSRC:.c=.o}
+LREPORT   = yylex.output
+YREPORT   = yyparse.output
+IREPORT   = ident.output
+REPORTS   = ${LREPORT} ${YREPORT} ${IREPORT}
 ALLSRC    = ${ETCSRC} ${YSOURCES} ${LSOURCES} ${HSOURCES} ${CSOURCES}
 TESTINS   = ${wildcard test?.in}
 LISTSRC   = ${ALLSRC} ${HYGEN}
@@ -59,7 +63,9 @@ lint : ${CSOURCES}
 # Build the scanner.
 #
 ${CLGEN} : ${LSOURCES}
-	flex -o${CLGEN} ${LSOURCES}
+	flex -o${CLGEN} ${LSOURCES} 2>${LREPORT}
+	- grep -v '^  ' ${LREPORT}
+	- (perl -e 'print "="x65,"\n"'; cat lex.backup) >>${LREPORT} 
 	- rm lex.backup
 
 #
@@ -72,10 +78,12 @@ ${CYGEN} ${HYGEN} : ${YSOURCES}
 # Clean and spotless remove generated files.
 #
 clean :
-	- rm ${OBJECTS} ${ALLGENS} ${DEPSFILE}
+	- rm ${OBJECTS} ${ALLGENS} ${REPORTS} ${DEPSFILE} core
+	- rm ${foreach test, ${TESTINS:.in=}, \
+		${patsubst %, ${test}.%, out err log}}
 
 spotless : clean
-	- rm ${EXECBIN}
+	- rm ${EXECBIN} List.*.ps List.*.pdf
 
 #
 # Build the dependencies file using the C preprocessor
