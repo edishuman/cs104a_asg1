@@ -1,4 +1,3 @@
-
 #include <assert.h>
 #include <ctype.h>
 #include <stdbool.h>
@@ -87,39 +86,40 @@ void scanner_badtoken (char *lexeme) {
 }
 
 int yylval_token (int symbol) {
-   int offset = scan_offset - yyleng;
-   yylval = new_astree (symbol, filename_stack.last_filenr,
-                        scan_linenr, offset, yytext);
-                    
-   printf("%d\t%d.%03d\t%d\t%s\t(%s)\n", 
-   			yylval->filenr, yylval->linenr, yylval->offset, 
-   			yylval->symbol, get_yytname(yylval->symbol), yylval->lexinfo);
-   return symbol;
+	int offset = scan_offset - yyleng;
+	yylval = new_astree (symbol, filename_stack.last_filenr,
+		                scan_linenr, offset, yytext);
+    /*                
+    printf("%d\t%d.%03d\t%d\t%s\t(%s)\n",
+    yylval->filenr, yylval->linenr, yylval->offset,
+    yylval->symbol, get_yytname(yylval->symbol), yylval->lexinfo);*/
+	return symbol;
 }
 
 astree new_parseroot (void) {
-   yyparse_astree = new_astree (ROOT, 0, 0, 0, "<<ROOT>>");
-   return yyparse_astree;
+	yyparse_astree = new_astree (ROOT, 0, 0, 0, "<<ROOT>>");
+	return yyparse_astree;
 }
 
 
 void scanner_include (void) {
-   scanner_newline();
-   char *filename = alloca (strlen (yytext) + 1);
-   int linenr;
-   int scan_rc = sscanf (yytext, "# %d \"%[^\"]\"", &linenr, filename);
-   if (scan_rc != 2) {
-      errprintf ("%: %d: [%s]: invalid directive, ignored\n",
-                 scan_rc, yytext);
-   }else {
-      char *newfilename = strdup (filename);
-      assert (newfilename != NULL);
-      printf (";# %d \"%s\"\n", linenr, newfilename);
-      scanner_newfilename (newfilename);
-      scan_linenr = linenr - 1;
-      DEBUGF ('m', "filename=%s, scan_linenr=%d\n",
-              filename_stack.filenames[filename_stack.last_filenr],
-              scan_linenr);
-   }
+	scanner_newline();
+	char *filename = alloca (strlen (yytext) + 1);
+	int linenr;
+	int scan_rc = sscanf (yytext, "# %d \"%[^\"]\"", &linenr, filename);
+	if (scan_rc != 2) {
+	    errprintf ("%: %d: [%s]: invalid directive, ignored\n",
+		         scan_rc, yytext);
+	}else {
+	  char *newfilename = strdup (filename);
+	  assert (newfilename != NULL);
+	  printf (";# %d \"%s\"\n", linenr, newfilename);
+	  scanner_newfilename (newfilename);
+	  scan_linenr = linenr - 1;
+	  DEBUGF ('m', "filename=%s, scan_linenr=%d\n",
+		      filename_stack.filenames[filename_stack.last_filenr],
+		      scan_linenr);
+	}
 }
+
 

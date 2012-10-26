@@ -20,5 +20,7 @@ void freeast (astree tree);
 
 #define freeast2(T1,T2) { freeast (T1); freeast (T2); }
 
-
+// LINTED(static unused)
+RCSH(ASTREE_H,"$Id: astree.h,v 1.7 2012-10-11 18:22:20-07 - - $")
 #endif
+

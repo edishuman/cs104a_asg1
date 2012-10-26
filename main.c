@@ -11,7 +11,7 @@
 #include <unistd.h>
 
 #include "astree.h"
-#include "emit.h"
+#include "astree.rep.h"
 #include "lyutils.h"
 
 #include "stringtable.h"
@@ -45,14 +45,18 @@ void cpplines (char *input_file, stringtable_ref str_table) {
          fprintf (stderr, "%s:%d:yylex(): ", input_file, linenr);
       }
       
-      int token = yylex();
-      if (token == YYEOF) break;
-      if (yy_flex_debug) fflush (NULL);
-      
-      //yyprint(stdout, 
-      //printf("token no: %d\t", token);
-      //printf("string token: %s\n", get_yytname (token));
-      //intern_stringtable(str_table, token); //<-------
+		int token = yylex();
+		if (token == YYEOF) break;
+		if (yy_flex_debug) fflush (NULL);
+		
+		printf("%d\t%d.%03d\t%d\t%s\t(%s)\n",
+			yylval->filenr, yylval->linenr, yylval->offset,
+			yylval->symbol, get_yytname(yylval->symbol), yylval->lexinfo);
+		
+		//yyprint(stdout, 
+		//printf("token no: %d\t", token);
+		//printf("string token: %s\n", get_yytname (token));
+		intern_stringtable(str_table, yylval->lexinfo); //<-------
       ++linenr;
     }
 }

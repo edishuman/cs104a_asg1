@@ -7,8 +7,8 @@ NEEDINCL  = ${filter ${NOINCLUDE}, ${MAKECMDGOALS}}
 #
 # Definitions of list of files:
 #
-HSOURCES  = astree.h astree.rep.h emit.h lyutils.h auxlib.h strhash.h stringtable.h
-CSOURCES  = astree.c emit.c lyutils.c main.c auxlib.c strhash.c stringtable.c
+HSOURCES  = astree.h astree.rep.h lyutils.h auxlib.h strhash.h stringtable.h
+CSOURCES  = astree.c lyutils.c main.c auxlib.c strhash.c stringtable.c
 LSOURCES  = scanner.l
 YSOURCES  = parser.y
 ETCSRC    = README ${MKFILE} ${DEPSFILE}
@@ -75,7 +75,7 @@ clean :
 	- rm ${OBJECTS} ${ALLGENS} ${DEPSFILE}
 
 spotless : clean
-	- rm ${EXECBIN}
+	- rm ${EXECBIN} *.str *.tok
 
 #
 # Build the dependencies file using the C preprocessor

@@ -38,7 +38,7 @@ astree new_astree (int symbol, int filenr, int linenr, int offset,
    return tree;
 }
 
-
+
 astree adopt (astree root, ...) {
    va_list children;
    assert (is_astree (root));
@@ -72,7 +72,7 @@ astree adopt1sym (astree root, astree child, int symbol) {
    return root;
 }
 
-
+
 static void dump_node (FILE *outfile, astree node, int depth) {
    assert (is_astree (node));
    fprintf (outfile, "%p-> astree {%s(%d), %d:%d.%03d, %p->\"%s\",\n",
@@ -129,4 +129,8 @@ void freeast (astree root) {
    memset (root, 0, sizeof (struct astree_rep));
    free (root);
 }
+
+// LINTED(static unused)
+RCSC(ASTREE_C,"$Id: astree.c,v 1.11 2012-10-11 18:22:20-07 - - $")
+
 
