@@ -15,11 +15,14 @@ LETTER          [a-zA-Z_]
 DIGIT           [0-9]
 IDENT           {LETTER}({LETTER}|{DIGIT})*
 NUMBER          {DIGIT}+
+NOTIDENT		{NUMBER}{LETTER}({NUMBER}|{LETTER})*
 
 %%
 
+{NOTIDENT}		{ return NOTIDENT; }
 {IDENT}         { return IDENT; }
 {NUMBER}        { return NUMBER; }
+
 "+"             { return '+'; }
 "-"             { return '-'; }
 "*"             { return '*'; }

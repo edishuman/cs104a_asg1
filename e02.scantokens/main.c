@@ -29,6 +29,9 @@ void scanfile (char *filename) {
          case YYEOF:
             printf ("END OF FILE\n");
             return;
+         case NOTIDENT:
+         	printf ("NOTIDENT = \"%s\"\n", yytext);
+            break;
          case IDENT:
             printf ("IDENT = \"%s\"\n", yytext);
             break;

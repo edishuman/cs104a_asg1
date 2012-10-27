@@ -13,7 +13,7 @@
 #include "astree.h"
 #include "astree.rep.h"
 #include "lyutils.h"
-
+#include "mylib.h"
 #include "stringtable.h"
 
 #define _GNU_SOURCE
@@ -25,6 +25,8 @@ char *progname;
 char cpp_opt[50] = "";
 int exit_status = EXIT_SUCCESS;
 
+FILE *writeto_str;
+
 // Print a warning after a failed system call.
 void syswarn (char *problem) {
     fflush (NULL);
@@ -34,31 +36,59 @@ void syswarn (char *problem) {
     exit_status = EXIT_FAILURE;
 }
 
+// Chomp the last character from a buffer if it is delim.
+void chomp (char *string, char delim) {
+    size_t len = strlen (string);
+    if (len == 0) return;
+    char *nlpos = string + len - 1;
+    if (*nlpos == delim) *nlpos = '\0';
+}
+
 // Run cpp against the lines of the file.
-void cpplines (char *input_file, stringtable_ref str_table) {
+void cpplines (FILE *pipe, char *input_file, stringtable_ref str_table) {
     int linenr = 1;
     char inputname[LINESIZE];
     strcpy (inputname, input_file);
+    
     for (;;) {
-       if (yy_flex_debug) {
-         fflush (NULL);
-         fprintf (stderr, "%s:%d:yylex(): ", input_file, linenr);
-      }
-      
+       char buffer[LINESIZE];
+       char *fgets_rc = fgets (buffer, LINESIZE, pipe);
+       if (fgets_rc == NULL) break;
+       chomp (buffer, '\n');
+       int sscanf_rc = sscanf (buffer, "# %d \"%[^\"]\"",
+                               &linenr, input_file);
+       if (sscanf_rc == 2) {
+          continue;
+       }
+       char *savepos = NULL;
+       char *bufptr = buffer;
+       for (int tokenct = 1;; ++tokenct) {
+          char *token = strtok_r (bufptr, " \t\n", &savepos);
+          bufptr = NULL;
+          if (token == NULL) break;
+          intern_stringtable(str_table, token);
+       }
+       ++linenr;
+    }
+    
+    for (;;) {
+		if (yy_flex_debug) {
+			fflush (NULL);
+			fprintf (stderr, "%s:%d:yylex(): ", input_file, linenr);
+		}
+
 		int token = yylex();
 		if (token == YYEOF) break;
 		if (yy_flex_debug) fflush (NULL);
 		
-		printf("%d\t%d.%03d\t%d\t%s\t(%s)\n",
-			yylval->filenr, yylval->linenr, yylval->offset,
-			yylval->symbol, get_yytname(yylval->symbol), yylval->lexinfo);
+		dump_token();
+		/*
+		printf("%d%5d.%03d%5d\t%-15s(%s)\n",
+		yylval->filenr, yylval->linenr, yylval->offset,
+		yylval->symbol, get_yytname(yylval->symbol), yylval->lexinfo);
+		*/
 		
-		//yyprint(stdout, 
-		//printf("token no: %d\t", token);
-		//printf("string token: %s\n", get_yytname (token));
-		intern_stringtable(str_table, yylval->lexinfo); //<-------
-      ++linenr;
-    }
+	}
 }
 
 void scan_opts (int argc, char **argv) {
@@ -83,18 +113,21 @@ void scan_opts (int argc, char **argv) {
 }
 
 char *yyin_cpp_command = NULL;
-void yyin_cpp_popen (char *input_file, stringtable_ref str_table) {
+void yyin_cpp_open (char *input_file, stringtable_ref str_table) {
     yyin_cpp_command = malloc(strlen (CPP) + strlen (input_file) + 2);
     strcpy (yyin_cpp_command, CPP);
     strcat (yyin_cpp_command, " ");
     strcat (yyin_cpp_command, cpp_opt);
     strcat (yyin_cpp_command, input_file);
     
+    FILE *pipe = popen (yyin_cpp_command, "r");
     yyin = popen (yyin_cpp_command, "r");
-    if (yyin == NULL) {
+    if (pipe == NULL || yyin == NULL) {
        syswarn (yyin_cpp_command);
+       pclose(pipe);
     } else {
-       cpplines (input_file, str_table);
+       cpplines (pipe, input_file, str_table);
+       pclose(pipe);
     }
 }
 
@@ -103,12 +136,12 @@ void yyin_cpp_pclose (void) {
    eprint_status (yyin_cpp_command, pclose_rc);
 }
 
-char *create_file_ext (char *p, char *input_file) {
+char *create_file_ext (char *p, char *input_file, char *ext) {
 	int len = p-input_file;
 	char *outputfile = malloc(len + 5);
 	memset(outputfile, 0, len + 5);
 	strncpy(outputfile, input_file, len);
-	strcat(outputfile, ".str");
+	strcat(outputfile, ext);
 	return outputfile;
 }
 
@@ -137,15 +170,22 @@ int main (int argc, char **argv) {
 	stringtable_ref str_table = new_stringtable();
 	
 	//Auxiliary functions to make code more modular
-	char *outputfile = create_file_ext(p, input_file);
-    yyin_cpp_popen(input_file, str_table);
-
-	//Create file with .str extension and write to it
-	FILE *writeto = fopen(outputfile, "w");
+	char *outputfile_str = create_file_ext(p, input_file, ".str");
+	char *outputfile_tok = create_file_ext(p, input_file, ".tok");
 	
-    debugdump_stringtable(str_table, writeto);
+	//Create file with .str/.tok extension and write to it
+	writeto_str = fopen(outputfile_str, "w");
+	writeto_tok = fopen(outputfile_tok, "w");
+	
+    yyin_cpp_open(input_file, str_table);
+
+	
+	
+    debugdump_stringtable(str_table, writeto_str);
     delete_stringtable(str_table);
     
+    fclose(writeto_str);
+    fclose(writeto_tok);
     yyin_cpp_pclose();
     return EXIT_SUCCESS;
 }

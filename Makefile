@@ -7,8 +7,8 @@ NEEDINCL  = ${filter ${NOINCLUDE}, ${MAKECMDGOALS}}
 #
 # Definitions of list of files:
 #
-HSOURCES  = astree.h astree.rep.h lyutils.h auxlib.h strhash.h stringtable.h
-CSOURCES  = astree.c lyutils.c main.c auxlib.c strhash.c stringtable.c
+HSOURCES  = astree.h astree.rep.h lyutils.h auxlib.h strhash.h stringtable.h mylib.h
+CSOURCES  = astree.c lyutils.c main.c auxlib.c strhash.c stringtable.c mylib.c
 LSOURCES  = scanner.l
 YSOURCES  = parser.y
 ETCSRC    = README ${MKFILE} ${DEPSFILE}

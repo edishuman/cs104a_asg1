@@ -89,10 +89,6 @@ int yylval_token (int symbol) {
 	int offset = scan_offset - yyleng;
 	yylval = new_astree (symbol, filename_stack.last_filenr,
 		                scan_linenr, offset, yytext);
-    /*                
-    printf("%d\t%d.%03d\t%d\t%s\t(%s)\n",
-    yylval->filenr, yylval->linenr, yylval->offset,
-    yylval->symbol, get_yytname(yylval->symbol), yylval->lexinfo);*/
 	return symbol;
 }
 
@@ -113,7 +109,7 @@ void scanner_include (void) {
 	}else {
 	  char *newfilename = strdup (filename);
 	  assert (newfilename != NULL);
-	  printf (";# %d \"%s\"\n", linenr, newfilename);
+	  fprintf (writeto_tok, "# %d \"%s\"\n", linenr, newfilename);
 	  scanner_newfilename (newfilename);
 	  scan_linenr = linenr - 1;
 	  DEBUGF ('m', "filename=%s, scan_linenr=%d\n",
@@ -121,5 +117,29 @@ void scanner_include (void) {
 		      scan_linenr);
 	}
 }
+
+void dump_token(void) {
+	fprintf(writeto_tok, "%d%5d.%03d%5d\t%-15s(%s)\n",
+		yylval->filenr, yylval->linenr, yylval->offset,
+		yylval->symbol, get_yytname(yylval->symbol), yylval->lexinfo);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

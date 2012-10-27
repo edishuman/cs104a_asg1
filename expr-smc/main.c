@@ -10,10 +10,14 @@
 #include "astree.h"
 #include "emit.h"
 #include "lyutils.h"
-#include "auxlib.h"	
+#include "auxlib.h"
 
 #define CPP "/usr/bin/cpp"
 
+struct options{
+   bool dumptree;
+   bool echoinput;
+};
 
 // Open a pipe from the C preprocessor.
 // Exit failure if can't.
@@ -35,9 +39,10 @@ void yyin_cpp_popen (char *filename) {
 void yyin_cpp_pclose (void) {
    int pclose_rc = pclose (yyin);
    eprint_status (yyin_cpp_command, pclose_rc);
+   if (pclose_rc != 0) set_exitstatus (EXIT_FAILURE);
 }
 
-
+
 void scan_opts (int argc, char **argv, struct options *options) {
    int option;
    opterr = 0;
@@ -66,10 +71,14 @@ void scan_opts (int argc, char **argv, struct options *options) {
 }
 
 int main (int argc, char **argv) {
-   
+   struct options options = {false, false};
    int parsecode = 0;
    set_execname (argv[0]);
-
+   DEBUGSTMT ('m',
+      for (int argi = 0; argi < argc; ++argi) {
+         eprintf ("%s%c", argv[argi], argi < argc - 1 ? ' ' : '\n');
+      }
+   );
    scan_opts (argc, argv, &options);
    scanner_setecho (options.echoinput);
    parsecode = yyparse();
@@ -77,10 +86,14 @@ int main (int argc, char **argv) {
       errprintf ("%:parse failed (%d)\n", parsecode);
    }else {
       DEBUGSTMT ('a', dump_astree (stderr, yyparse_astree); );
-      //emit_sm_code (yyparse_astree);
+      emit_sm_code (yyparse_astree);
    }
    freeast (yyparse_astree);
    yyin_cpp_pclose();
    return get_exitstatus();
 }
+
+// LINTED(static unused)
+RCSC(MAIN_C,"$Id: main.c,v 1.16 2012-10-22 14:03:59-07 - - $")
+
 

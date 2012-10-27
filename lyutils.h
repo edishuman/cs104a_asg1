@@ -7,16 +7,9 @@
 
 #include "astree.h"
 #include "auxlib.h"
+#include "mylib.h"
 
 #define YYEOF 0
-
-extern FILE *yyin;
-extern astree yyparse_astree;
-extern int yyin_linenr;
-extern char *yytext;
-extern int yy_flex_debug;
-extern int yydebug;
-extern int yyleng;
 
 int yylex (void);
 int yyparse (void);
@@ -35,6 +28,8 @@ astree new_parseroot (void);
 int yylval_token (int symbol);
 
 void scanner_include (void);
+
+void dump_token (void);
 
 #define YYSTYPE astree
 #include "yyparse.h"
